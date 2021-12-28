@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { ethers } from 'ethers'; // need for web3 stuff
 
 import styles from "./App.module.css";
 
@@ -18,10 +19,7 @@ import male from "./assets/images/pictures/generator-male-picture.png";
 
 import { bgDataLength } from "./assets/data/Row2BGData";
 import { skinDataLength } from "./assets/data/Row2SkinData";
-import {
-  femaleMouthDataLength,
-  maleMouthDataLength,
-} from "./assets/data/Row2MouthData";
+import { femaleMouthDataLength,  maleMouthDataLength,} from "./assets/data/Row2MouthData";
 import {
   femaleHairDataLength,
   maleHairDataLength,
@@ -32,7 +30,98 @@ import {
 } from "./assets/data/Row2ClothesData";
 import { accessoiresDataLength } from "./assets/data/Row2AccessoiresData";
 
-const App = () => {
+
+import Greeter from './Greeter.json'; // where do you want to store this json ? 
+import { connect } from "tls";
+import { WebSocketProvider } from "@ethersproject/providers";
+// import { stringify } from "querystring";
+
+const greeterAddress = "0x59b670e9fA9D0A427751Af201D676719a970857b";
+declare var window: any // does this line bother you?
+
+function App() {
+
+  // deploy simple storage contract and paste deployed contract address here. This value is local ganache chain
+	let contractAddress = '0xEd3AAE51d33138ef67555AE0925A38E77Df5B7e0';
+
+	const [errorMessage, setErrorMessage] = useState('');
+	const [defaultAccount, setDefaultAccount] = useState('');
+	const [connButtonText, setConnButtonText] = useState('Connect Wallet');
+
+	const [currentContractVal, setCurrentContractVal] = useState('');
+
+	const [provider, setProvider] = useState(new ethers.providers.Web3Provider(window.ethereum));
+	const [signer, setSigner] = useState(new ethers.providers.Web3Provider(window.ethereum).getSigner());
+
+
+
+  let tempSigner = new ethers.providers.Web3Provider(window.ethereum).getSigner()
+  let contract = new ethers.Contract(contractAddress, Greeter.abi, tempSigner);
+
+	const connectWalletHandler = () => {
+		if (window.ethereum && window.ethereum.isMetaMask) {
+
+			window.ethereum.request({ method: 'eth_requestAccounts'})
+			.then((result: any[])  => {
+				accountChangedHandler(result[0]);
+				setConnButtonText('Wallet Connected');
+			})
+			.catch((error : any) => {
+				setErrorMessage(error.message);
+			
+			});
+
+		} else {
+			console.log('Need to install MetaMask');
+			setErrorMessage('Please install MetaMask browser extension to interact');
+		}
+	}
+
+	// update account, will cause component re-render
+	const accountChangedHandler = (newAccount: string) => {
+		setDefaultAccount(newAccount);
+		updateEthers();
+	}
+
+	const chainChangedHandler = () => {
+		// reload the page to avoid any errors with chain change mid use of application
+		window.location.reload();
+	}
+
+
+	// listen for account changes
+	window.ethereum.on('accountsChanged', accountChangedHandler);
+
+	window.ethereum.on('chainChanged', chainChangedHandler);
+
+	const updateEthers = () => {
+		let tempProvider = new ethers.providers.Web3Provider(window.ethereum);
+		setProvider(tempProvider);
+
+		let tempSigner = tempProvider.getSigner();
+		setSigner(tempSigner);
+
+		let tempContract = new ethers.Contract(contractAddress, Greeter.abi, tempSigner);
+		// setContract(tempContract);	
+
+    tempContract.setGreetingPayable("tchunkla");
+	}
+
+	const setHandler = (event : any) => {
+		event.preventDefault();
+		console.log('sending ' + event.target.setText.value + ' to the contract');
+		contract.set(event.target.setText.value);
+	}
+
+	const getCurrentVal = async () => {
+		let val = await contract.get();
+		setCurrentContractVal(val);
+	}
+
+
+
+
+
   const dispatch = useDispatch();
 
   const [refresh, setRefresh] = useState(0);
@@ -72,11 +161,13 @@ const App = () => {
     closeModal();
   };
 
+  
   const downloadHandler = () => {
     let JSONseed = JSON.stringify(seed);
   };
+  
 
-  //Fonction backend
+  // Backend func
 
   useEffect(() => {
     let randomRow2 = [
@@ -122,6 +213,7 @@ const App = () => {
       <Generator setRefresh={setRefresh} />
       <div className={styles.container}>
         <img src={titleSVG} alt="title svg" className={styles.title} />
+        
         <div className={styles.rowsContainer}>
           <Row1 />
           <Row2 />
@@ -132,6 +224,25 @@ const App = () => {
             <img src={buttonSVG} alt="download button" />
           </div>
           <p>Download your own Miliway as a .png</p>
+
+          <div>
+          <h4> {"Get/Set Contract interaction"} </h4>
+            <button onClick={connectWalletHandler}>{connButtonText}</button>
+            <div>
+              <h3>Address: {defaultAccount}</h3>
+            </div>
+            <form onSubmit={setHandler}>
+              <input id="setText" type="text"/>
+              <button type={"submit"}> Update Contract </button>
+            </form>
+            <div>
+            <button onClick={getCurrentVal} style={{marginTop: '5em'}}> Get Current Contract Value </button>
+            </div>
+            {currentContractVal}
+            {errorMessage}
+          </div>
+
+
         </div>
       </div>
     </main>
