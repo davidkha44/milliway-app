@@ -14,6 +14,7 @@ import Row3 from "./components/Row3";
 
 import titleSVG from "./assets/images/pictures/make-your-own-milliway-citizen.svg";
 import buttonSVG from "./assets/images/buttons/download.svg";
+import buttonConnectWallet from "./assets/images/buttons/connect.svg";
 import female from "./assets/images/pictures/generator-female-picture.png";
 import male from "./assets/images/pictures/generator-male-picture.png";
 
@@ -31,18 +32,16 @@ import {
 import { accessoiresDataLength } from "./assets/data/Row2AccessoiresData";
 
 
-import Greeter from './Greeter.json'; // where do you want to store this json ? 
+import Greeter from './contracts/Greeter.json'; // where do you want to store this json ? 
 import { connect } from "tls";
 import { WebSocketProvider } from "@ethersproject/providers";
-// import { stringify } from "querystring";
 
-const greeterAddress = "0x59b670e9fA9D0A427751Af201D676719a970857b";
 declare var window: any // does this line bother you?
 
 function App() {
 
   // deploy simple storage contract and paste deployed contract address here. This value is local ganache chain
-	let contractAddress = '0xEd3AAE51d33138ef67555AE0925A38E77Df5B7e0';
+	let contractAddress = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
 
 	const [errorMessage, setErrorMessage] = useState('');
 	const [defaultAccount, setDefaultAccount] = useState('');
@@ -53,24 +52,16 @@ function App() {
 	const [provider, setProvider] = useState(new ethers.providers.Web3Provider(window.ethereum));
 	const [signer, setSigner] = useState(new ethers.providers.Web3Provider(window.ethereum).getSigner());
 
-
-
-  let tempSigner = new ethers.providers.Web3Provider(window.ethereum).getSigner()
-  let contract = new ethers.Contract(contractAddress, Greeter.abi, tempSigner);
-
 	const connectWalletHandler = () => {
 		if (window.ethereum && window.ethereum.isMetaMask) {
-
-			window.ethereum.request({ method: 'eth_requestAccounts'})
+      window.ethereum.request({ method: 'eth_requestAccounts'})
 			.then((result: any[])  => {
 				accountChangedHandler(result[0]);
 				setConnButtonText('Wallet Connected');
 			})
 			.catch((error : any) => {
 				setErrorMessage(error.message);
-			
 			});
-
 		} else {
 			console.log('Need to install MetaMask');
 			setErrorMessage('Please install MetaMask browser extension to interact');
@@ -88,39 +79,36 @@ function App() {
 		window.location.reload();
 	}
 
-
 	// listen for account changes
 	window.ethereum.on('accountsChanged', accountChangedHandler);
-
 	window.ethereum.on('chainChanged', chainChangedHandler);
 
 	const updateEthers = () => {
 		let tempProvider = new ethers.providers.Web3Provider(window.ethereum);
 		setProvider(tempProvider);
-
 		let tempSigner = tempProvider.getSigner();
 		setSigner(tempSigner);
-
-		let tempContract = new ethers.Contract(contractAddress, Greeter.abi, tempSigner);
-		// setContract(tempContract);	
-
-    tempContract.setGreetingPayable("tchunkla");
+		// let tempContract = new ethers.Contract(contractAddress, Greeter.abi, tempSigner);
 	}
 
-	const setHandler = (event : any) => {
+	const setHandler = async (event : any) => {
+    console.log('set handler')
 		event.preventDefault();
 		console.log('sending ' + event.target.setText.value + ' to the contract');
-		contract.set(event.target.setText.value);
+		// contract.set(event.target.setText.value);
+    let contract = new ethers.Contract(contractAddress, Greeter.abi, signer);
+    await contract.connect(signer).setGreetingPayable('david le boss');
 	}
 
-	const getCurrentVal = async () => {
-		let val = await contract.get();
-		setCurrentContractVal(val);
+	const mint = async () => {
+    let contract = new ethers.Contract(contractAddress, Greeter.abi, signer);
+    await contract.connect(signer).setGreetingPayable('david le boss qui paye', { value: ethers.utils.parseEther("1")});
 	}
 
-
-
-
+  const getReward = async () => {
+    let contract = new ethers.Contract(contractAddress, Greeter.abi, signer);
+    await contract.connect(signer).setGreetingPayable('david le boss qui paye', { value: ethers.utils.parseEther("1")});
+	}
 
   const dispatch = useDispatch();
 
@@ -213,7 +201,9 @@ function App() {
       <Generator setRefresh={setRefresh} />
       <div className={styles.container}>
         <img src={titleSVG} alt="title svg" className={styles.title} />
-        
+        <div onClick={connectWalletHandler} className={styles.button}>
+            <img src={buttonConnectWallet} alt="download button" />
+          </div>
         <div className={styles.rowsContainer}>
           <Row1 />
           <Row2 />
@@ -225,24 +215,8 @@ function App() {
           </div>
           <p>Download your own Miliway as a .png</p>
 
-          <div>
-          <h4> {"Get/Set Contract interaction"} </h4>
-            <button onClick={connectWalletHandler}>{connButtonText}</button>
-            <div>
-              <h3>Address: {defaultAccount}</h3>
-            </div>
-            <form onSubmit={setHandler}>
-              <input id="setText" type="text"/>
-              <button type={"submit"}> Update Contract </button>
-            </form>
-            <div>
-            <button onClick={getCurrentVal} style={{marginTop: '5em'}}> Get Current Contract Value </button>
-            </div>
-            {currentContractVal}
-            {errorMessage}
-          </div>
-
-
+          <button onClick={mint}>MINT</button>
+          <button onClick={getReward}>Get Milliverse Coins</button>
         </div>
       </div>
     </main>
