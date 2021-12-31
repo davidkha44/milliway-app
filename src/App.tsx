@@ -1,6 +1,6 @@
-import { SetStateAction, useEffect, useState } from "react";
+import { SetStateAction, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { ethers } from 'ethers'; // need for web3 stuff
+import { ethers } from "ethers"; // need for web3 stuff
 
 import styles from "./App.module.css";
 
@@ -20,7 +20,10 @@ import male from "./assets/images/pictures/generator-male-picture.png";
 
 import { bgDataLength } from "./assets/data/Row2BGData";
 import { skinDataLength } from "./assets/data/Row2SkinData";
-import { femaleMouthDataLength,  maleMouthDataLength,} from "./assets/data/Row2MouthData";
+import {
+  femaleMouthDataLength,
+  maleMouthDataLength,
+} from "./assets/data/Row2MouthData";
 import {
   femaleHairDataLength,
   maleHairDataLength,
@@ -31,84 +34,95 @@ import {
 } from "./assets/data/Row2ClothesData";
 import { accessoiresDataLength } from "./assets/data/Row2AccessoiresData";
 
-
-import Greeter from './contracts/Greeter.json'; // where do you want to store this json ? 
+import Greeter from "./contracts/Greeter.json"; // where do you want to store this json ?
 import { connect } from "tls";
 import { WebSocketProvider } from "@ethersproject/providers";
 
-declare var window: any // does this line bother you?
+declare var window: any; // does this line bother you?
 
 function App() {
-
   // deploy simple storage contract and paste deployed contract address here. This value is local ganache chain
-	let contractAddress = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
+  let contractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
-	const [errorMessage, setErrorMessage] = useState('');
-	const [defaultAccount, setDefaultAccount] = useState('');
-	const [connButtonText, setConnButtonText] = useState('Connect Wallet');
+  const [errorMessage, setErrorMessage] = useState("");
+  const [defaultAccount, setDefaultAccount] = useState("");
+  const [connButtonText, setConnButtonText] = useState("Connect Wallet");
 
-	const [currentContractVal, setCurrentContractVal] = useState('');
+  const [currentContractVal, setCurrentContractVal] = useState("");
 
-	const [provider, setProvider] = useState(new ethers.providers.Web3Provider(window.ethereum));
-	const [signer, setSigner] = useState(new ethers.providers.Web3Provider(window.ethereum).getSigner());
+  const [provider, setProvider] = useState(
+    new ethers.providers.Web3Provider(window.ethereum)
+  );
+  const [signer, setSigner] = useState(
+    new ethers.providers.Web3Provider(window.ethereum).getSigner()
+  );
 
-	const connectWalletHandler = () => {
-		if (window.ethereum && window.ethereum.isMetaMask) {
-      window.ethereum.request({ method: 'eth_requestAccounts'})
-			.then((result: any[])  => {
-				accountChangedHandler(result[0]);
-				setConnButtonText('Wallet Connected');
-			})
-			.catch((error : any) => {
-				setErrorMessage(error.message);
-			});
-		} else {
-			console.log('Need to install MetaMask');
-			setErrorMessage('Please install MetaMask browser extension to interact');
-		}
-	}
+  const connectWalletHandler = () => {
+    if (window.ethereum && window.ethereum.isMetaMask) {
+      window.ethereum
+        .request({ method: "eth_requestAccounts" })
+        .then((result: any[]) => {
+          accountChangedHandler(result[0]);
+          setConnButtonText("Wallet Connected");
+        })
+        .catch((error: any) => {
+          setErrorMessage(error.message);
+        });
+    } else {
+      console.log("Need to install MetaMask");
+      setErrorMessage("Please install MetaMask browser extension to interact");
+    }
+  };
 
-	// update account, will cause component re-render
-	const accountChangedHandler = (newAccount: string) => {
-		setDefaultAccount(newAccount);
-		updateEthers();
-	}
+  // update account, will cause component re-render
+  const accountChangedHandler = (newAccount: string) => {
+    setDefaultAccount(newAccount);
+    updateEthers();
+  };
 
-	const chainChangedHandler = () => {
-		// reload the page to avoid any errors with chain change mid use of application
-		window.location.reload();
-	}
+  const chainChangedHandler = () => {
+    // reload the page to avoid any errors with chain change mid use of application
+    window.location.reload();
+  };
 
-	// listen for account changes
-	window.ethereum.on('accountsChanged', accountChangedHandler);
-	window.ethereum.on('chainChanged', chainChangedHandler);
+  // listen for account changes
+  window.ethereum.on("accountsChanged", accountChangedHandler);
+  window.ethereum.on("chainChanged", chainChangedHandler);
 
-	const updateEthers = () => {
-		let tempProvider = new ethers.providers.Web3Provider(window.ethereum);
-		setProvider(tempProvider);
-		let tempSigner = tempProvider.getSigner();
-		setSigner(tempSigner);
-		// let tempContract = new ethers.Contract(contractAddress, Greeter.abi, tempSigner);
-	}
+  const updateEthers = () => {
+    let tempProvider = new ethers.providers.Web3Provider(window.ethereum);
+    setProvider(tempProvider);
+    let tempSigner = tempProvider.getSigner();
+    setSigner(tempSigner);
+    // let tempContract = new ethers.Contract(contractAddress, Greeter.abi, tempSigner);
+  };
 
-	const setHandler = async (event : any) => {
-    console.log('set handler')
-		event.preventDefault();
-		console.log('sending ' + event.target.setText.value + ' to the contract');
-		// contract.set(event.target.setText.value);
+  const setHandler = async (event: any) => {
+    console.log("set handler");
+    event.preventDefault();
+    console.log("sending " + event.target.setText.value + " to the contract");
+    // contract.set(event.target.setText.value);
     let contract = new ethers.Contract(contractAddress, Greeter.abi, signer);
-    await contract.connect(signer).setGreetingPayable('david le boss');
-	}
+    await contract.connect(signer).setGreetingPayable("david le boss");
+  };
 
-	const mint = async () => {
+  const mint = async () => {
     let contract = new ethers.Contract(contractAddress, Greeter.abi, signer);
-    await contract.connect(signer).setGreetingPayable('david le boss qui paye', { value: ethers.utils.parseEther("1")});
-	}
+    await contract
+      .connect(signer)
+      .setGreetingPayable("david le boss qui paye", {
+        value: ethers.utils.parseEther("1"),
+      });
+  };
 
   const getReward = async () => {
     let contract = new ethers.Contract(contractAddress, Greeter.abi, signer);
-    await contract.connect(signer).setGreetingPayable('david le boss qui paye', { value: ethers.utils.parseEther("1")});
-	}
+    await contract
+      .connect(signer)
+      .setGreetingPayable("david le boss qui paye", {
+        value: ethers.utils.parseEther("1"),
+      });
+  };
 
   const dispatch = useDispatch();
 
@@ -149,33 +163,67 @@ function App() {
     closeModal();
   };
 
-  
   const downloadHandler = () => {
     let JSONseed = JSON.stringify(seed);
   };
-  
 
   // Backend func
+  const randomRow2Handler = (
+    row2bg: number,
+    row2skin: number,
+    row2mouth: number,
+    row2hair: number,
+    row2clothes: number,
+    row2acc: number
+  ) => {
+    return [
+      Math.floor(Math.random() * row2bg),
+      Math.floor(Math.random() * row2skin),
+      Math.floor(Math.random() * row2mouth),
+      Math.floor(Math.random() * row2hair),
+      Math.floor(Math.random() * row2clothes),
+      Math.floor(Math.random() * row2acc),
+    ];
+  };
+  let memoizedRandomRow2 = useMemo(
+    () =>
+      randomRow2Handler(
+        bgDataLength,
+        skinDataLength,
+        mouthDataLength,
+        hairLength,
+        clothesLength,
+        accessoiresLength
+      ),
+    [accessoiresLength, clothesLength, hairLength, mouthDataLength]
+  );
+
+  const randomRow3Handler = (
+    row3HairColor: number,
+    row3Clothes: number,
+    row3Acc: number
+  ) => {
+    return [
+      Math.floor(Math.random() * row3HairColor),
+      Math.floor(Math.random() * row3Clothes),
+      Math.floor(Math.random() * row3Acc),
+    ];
+  };
+
+  let memoizedRandomRow3 = useMemo(
+    () =>
+      randomRow3Handler(
+        row3HairColorLength,
+        row3ClothesDataLength,
+        row3AccessoiresDataLength
+      ),
+    [row3AccessoiresDataLength, row3ClothesDataLength, row3HairColorLength]
+  );
 
   useEffect(() => {
-    let randomRow2 = [
-      Math.floor(Math.random() * bgDataLength),
-      Math.floor(Math.random() * skinDataLength),
-      Math.floor(Math.random() * mouthDataLength),
-      Math.floor(Math.random() * hairLength),
-      Math.floor(Math.random() * clothesLength),
-      Math.floor(Math.random() * accessoiresLength),
-    ];
-
-    let randomRow3 = [
-      Math.floor(Math.random() * row3HairColorLength),
-      Math.floor(Math.random() * row3ClothesDataLength),
-      Math.floor(Math.random() * row3AccessoiresDataLength),
-    ];
-    dispatch(setRow2(randomRow2));
-    dispatch(setRow3(randomRow3));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, refresh, gender]);
+    dispatch(setRow2(memoizedRandomRow2));
+    dispatch(setRow3(memoizedRandomRow3));
+  }, [dispatch, memoizedRandomRow2, memoizedRandomRow3]);
 
   let showModal = modalIsOpen ? "" : styles.modalClose;
 
@@ -202,8 +250,8 @@ function App() {
       <div className={styles.container}>
         <img src={titleSVG} alt="title svg" className={styles.title} />
         <div onClick={connectWalletHandler} className={styles.button}>
-            <img src={buttonConnectWallet} alt="download button" />
-          </div>
+          <img src={buttonConnectWallet} alt="download button" />
+        </div>
         <div className={styles.rowsContainer}>
           <Row1 />
           <Row2 />
@@ -221,6 +269,6 @@ function App() {
       </div>
     </main>
   );
-};
+}
 
 export default App;
