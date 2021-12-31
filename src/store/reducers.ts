@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 type Seed = number | number[];
+type Gender = "male" | "female";
 
 const indexSlice = createSlice({
   name: "index",
@@ -8,7 +9,7 @@ const indexSlice = createSlice({
     row1: 0,
     row2: [0, 0, 0, 0, 0, 0],
     row3: [0, 0, 0],
-    gender: "",
+    gender: "male",
     seed: [0, 0, 0, [0, 0], [0, 0], [0, 0]],
   },
   reducers: {
@@ -24,7 +25,7 @@ const indexSlice = createSlice({
       state.row3 = action.payload;
     },
 
-    setGender(state, action: PayloadAction<string>) {
+    setGender(state, action: PayloadAction<Gender>) {
       state.gender = action.payload;
     },
 

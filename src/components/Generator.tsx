@@ -29,7 +29,7 @@ const Generator = ({ setRefresh }: Props) => {
   const row2Index = useSelector((state: RootState) => state.row2);
   const row3Index = useSelector((state: RootState) => state.row3);
   const gender = useSelector((state: RootState) => state.gender);
-  const seed = [0, 0, 0, [0, 0], [0, 0], [0, 0]];
+  const seed = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   const [bgSource, setBgSource] = useState("");
   const [bgAlt, setBgAlt] = useState("");
@@ -62,29 +62,34 @@ const Generator = ({ setRefresh }: Props) => {
       ? 0
       : row3Index[2];
   useEffect(() => {
+    seed[0] = gender === "male" ? 0 : 1;
+
     setBgSource(layer1Data[row2Index[0]].source);
     setBgAlt(layer1Data[row2Index[0]].alt);
-    seed[0] = row2Index[0];
+    seed[1] = row2Index[0];
 
     setSkinSource(layer2Data[row2Index[1]].source);
     setSkinAlt(layer2Data[row2Index[1]].alt);
-    seed[1] = row2Index[1];
+    seed[2] = row2Index[1];
 
     setMouthSource(layer3Data[row2Index[2]].source);
     setMouthAlt(layer3Data[row2Index[2]].alt);
-    seed[2] = row2Index[2];
+    seed[3] = row2Index[2];
 
     setHairSource(layer4Data[row2Index[3]][row3Index[0]].source);
     setHairAlt(layer4Data[row2Index[3]][row3Index[0]].alt);
-    seed[3] = [row2Index[3], row3Index[0]];
+    seed[4] = row2Index[3];
+    seed[5] = row3Index[0];
 
     setClothesSource(layer5Data[row2Index[4]][clothesIndex].source);
     setClothesAlt(layer5Data[row2Index[4]][clothesIndex].alt);
-    seed[4] = [row2Index[4], clothesIndex];
+    seed[6] = row2Index[4];
+    seed[7] = clothesIndex;
 
     setAccessoireSource(layer6Data[row2Index[5]][accessoireIndex].source);
     setAccessoireAlt(layer6Data[row2Index[5]][accessoireIndex].alt);
-    seed[5] = [row2Index[5], accessoireIndex];
+    seed[8] = row2Index[5];
+    seed[9] = accessoireIndex;
 
     dispatch(setSeed(seed));
     // eslint-disable-next-line react-hooks/exhaustive-deps
